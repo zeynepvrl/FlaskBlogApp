@@ -13,6 +13,10 @@ class RegisterForm(Form):
     ])
     confirm=PasswordField("Parola Doğrulama")
 
+class LoginForm(Form):
+    username=StringField("Username")
+    password=PasswordField("Parola")
+
 app=Flask(__name__)
 
 app.secret_key="blogApp"
@@ -21,7 +25,7 @@ app.config["MYSQL_HOST"]="localhost"      #uzak bir server kiralamadığımız i
 app.config["MYSQL_USER"]="root"            #xampp de otamatik root ve boş parola ayarlıyor
 app.config["MYSQL_PASSWORD"]=""
 app.config["MYSQL_DB"]="ybblog"          #xampp de db oluştururken verdiğimiz isim
-app.config["MYSQL_CURSORCLASS"]="DictCursor"
+app.config["MYSQL_CURSORCLASS"]="DictCursor"   # aldığımız verileri cursor sözlük olarak döndürecek
 
 mysql=MySQL(app)
 
@@ -33,6 +37,39 @@ def index():
 def about():
     return render_template("about.html")
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    form=LoginForm(request.form)
+
+    if request.method=="POST":
+        
+        username=form.username.data
+        password=form.password.data
+
+        cursor=mysql.connection.cursor()
+        sorgu="Select * From users where username=%s"
+
+        result= cursor.execute(sorgu,(username,))
+        if result>0:
+            data=cursor.fetchone()
+            real_password=data["password"]               # cursor yukarda belirtildiğimi gibi dictionary döndürü
+            if sha256_crypt.verify(password,real_password):
+                flash("Başarı ile giriş yaptınız!","success")
+                return redirect(url_for("index"))
+            else:
+                flash("Parolanızı yanlış girdiniz..", "danger")
+                return redirect(url_for("login"))
+
+        else:
+            flash("Böyle bir kullanıcı bulunmuyor...", "danger")
+            return redirect(url_for("login"))
+
+        cursor.close()
+
+        return redirect("index.html")
+
+    else:
+        return render_template("login.html" , form= form)
 
 @app.route("/register", methods=["GET", "POST"] )
 def register():
@@ -53,7 +90,7 @@ def register():
 
         flash("Başarıyla kayıt oldunuz!","success")
 
-        return redirect(url_for("index"))    # yukardaki index() fonksiyonunun ilişkili olduğu dizine git -> url_of kullanımı
+        return redirect(url_for("login"))    # yukardaki index() fonksiyonunun ilişkili olduğu dizine git -> url_of kullanımı
     else:
         return render_template("register.html", form = form )   #yukarda oluşturduğumuz formu template e gönderiyoruz sayfa geldiğinde gösterebilmek için
 
