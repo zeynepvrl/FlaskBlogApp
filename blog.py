@@ -15,6 +15,8 @@ class RegisterForm(Form):
 
 app=Flask(__name__)
 
+app.secret_key="blogApp"
+
 app.config["MYSQL_HOST"]="localhost"      #uzak bir server kiralamadığımız için 
 app.config["MYSQL_USER"]="root"            #xampp de otamatik root ve boş parola ayarlıyor
 app.config["MYSQL_PASSWORD"]=""
@@ -31,18 +33,27 @@ def index():
 def about():
     return render_template("about.html")
 
+
 @app.route("/register", methods=["GET", "POST"] )
 def register():
     form = RegisterForm(request.form)          #eğer post requesti atıldıysa bu request içerisindeki from verileri oluşturduğumuz RegisterForm a gelecek 
 
-    if request.method=="POST":
+    if request.method=="POST" and form.validate():    #form validate değilse bilgilerde yanlışlık var ise çalışmaz
 
-        name=form.name
-        username=form.username
-        email=form.email
-        password=sha256_crypt.encrypt(form.password)
+        name=form.name.data
+        username=form.username.data
+        email=form.email.data
+        password=sha256_crypt.encrypt(form.password.data)
 
-        return redirect(url_for(index))    # yukardaki index() fonksiyonunun ilişkili olduğu dizine git -> url_of kullanımı
+        cursor=mysql.connection.cursor()
+        sorgu="Insert into users(name,username,email,password) VALUES(%s,%s,%s,%s)"      #pythondaki özelliğe geel, %s ile direkt alıyor aşağıdaki demetteki değerlerin yerine geçiyor
+        cursor.execute(sorgu,(name,username,email,password))       #demet ile göndeririz, eğer bir değer gönderecekse (name,)  şeklinde olmalıydı
+        mysql.connection.commit()     # veritabanında bir değişiklik yaptıysan eğer bunu commitlemen gerekir ayrıca 
+        cursor.close()     #kaynak kullanım israfı olamması için ardında cursor u kapatmak gerekir her işlemden sonra
+
+        flash("Başarıyla kayıt oldunuz!","success")
+
+        return redirect(url_for("index"))    # yukardaki index() fonksiyonunun ilişkili olduğu dizine git -> url_of kullanımı
     else:
         return render_template("register.html", form = form )   #yukarda oluşturduğumuz formu template e gönderiyoruz sayfa geldiğinde gösterebilmek için
 
