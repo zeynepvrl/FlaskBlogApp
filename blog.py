@@ -5,7 +5,7 @@ from passlib.hash import sha256_crypt
 
 class RegisterForm(Form):
     name = StringField("İsim Soyisim", validators=[validators.Length(min=4,max=30)])
-    username=StringField("Username", validators=[validators.Length(min=10, max=30)])
+    username=StringField("Username", validators=[validators.Length(min=5, max=30)])
     email=StringField("Email", validators=[validators.Email(message="Geçerli bir email adresi girin...")])
     password=PasswordField("Parola", validators=[
         validators.DataRequired(message="Liütfen bir parola giriniz..."),
@@ -19,11 +19,11 @@ class LoginForm(Form):
 
 app=Flask(__name__)
 
-app.secret_key="blogApp"
+app.secret_key="blogApp"           #flash mesajları için gerekli
 
 app.config["MYSQL_HOST"]="localhost"      #uzak bir server kiralamadığımız için 
 app.config["MYSQL_USER"]="root"            #xampp de otamatik root ve boş parola ayarlıyor
-app.config["MYSQL_PASSWORD"]=""
+app.config["MYSQL_PASSWORD"]="1234"
 app.config["MYSQL_DB"]="ybblog"          #xampp de db oluştururken verdiğimiz isim
 app.config["MYSQL_CURSORCLASS"]="DictCursor"   # aldığımız verileri cursor sözlük olarak döndürecek
 
@@ -55,6 +55,8 @@ def login():
             real_password=data["password"]               # cursor yukarda belirtildiğimi gibi dictionary döndürü
             if sha256_crypt.verify(password,real_password):
                 flash("Başarı ile giriş yaptınız!","success")
+                session['logged_in']= True                       # session a projenin her yerinde kullanabilirisn, navbarda bunlara göre görünümü değiştireceksin, çıkış yap gözükecek artık
+                session['userneme']=username
                 return redirect(url_for("index"))
             else:
                 flash("Parolanızı yanlış girdiniz..", "danger")
@@ -63,11 +65,6 @@ def login():
         else:
             flash("Böyle bir kullanıcı bulunmuyor...", "danger")
             return redirect(url_for("login"))
-
-        cursor.close()
-
-        return redirect("index.html")
-
     else:
         return render_template("login.html" , form= form)
 
@@ -88,11 +85,16 @@ def register():
         mysql.connection.commit()     # veritabanında bir değişiklik yaptıysan eğer bunu commitlemen gerekir ayrıca 
         cursor.close()     #kaynak kullanım israfı olamması için ardında cursor u kapatmak gerekir her işlemden sonra
 
-        flash("Başarıyla kayıt oldunuz!","success")
+        flash("Başarıyla kayıt oldunuz!","success")            #flash mesajlarını layout a yerleştirdim, ,mcludes/messages dan include ederek
 
         return redirect(url_for("login"))    # yukardaki index() fonksiyonunun ilişkili olduğu dizine git -> url_of kullanımı
     else:
         return render_template("register.html", form = form )   #yukarda oluşturduğumuz formu template e gönderiyoruz sayfa geldiğinde gösterebilmek için
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)

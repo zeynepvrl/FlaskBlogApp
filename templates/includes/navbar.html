@@ -1,27 +1,34 @@
 <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
-  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+    aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <a class="navbar-brand" href="/">YB Blog</a>
-  
+
   <div class="collapse navbar-collapse" id="navbarCollapse">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
         <a class="nav-link" href="/about">Hakkımızda</a>
       </li>
       <li class="nav-item active">
-          <a class="nav-link" href="/articles">Makaleler</a>
-        </li>
-      
+        <a class="nav-link" href="/articles">Makaleler</a>
+      </li>
+
     </ul>
 
     <ul class="navbar-nav ml-auto">
+      {% if session['logged_in'] %}
+      <li class="nav-item active">
+        <a href="/logout" class="nav-link">Çıkış Yap</a>
+      </li>
+      {% else %}
       <li class="nav-item active">
         <a href="/register" class="nav-link">Kayıt Ol</a>
       </li>
       <li class="nav-item active">
         <a href="/login" class="nav-link">Giriş Yap</a>
       </li>
+      {% endif %}
     </ul>
 
 
