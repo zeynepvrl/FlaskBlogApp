@@ -2,6 +2,17 @@ from flask import Flask,render_template, flash, redirect, url_for, session, logg
 from  flask_mysqldb import MySQL
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 from passlib.hash import sha256_crypt
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "logged_in" in session:
+            return f(*args, **kwargs)
+        else:
+            flash("Bu sayfayı görüntülemek için giriş yapmılısınız.")
+            return redirect(url_for("login"))
+    return decorated_function
 
 class RegisterForm(Form):
     name = StringField("İsim Soyisim", validators=[validators.Length(min=4,max=30)])
@@ -56,7 +67,7 @@ def login():
             if sha256_crypt.verify(password,real_password):
                 flash("Başarı ile giriş yaptınız!","success")
                 session['logged_in']= True                       # session a projenin her yerinde kullanabilirisn, navbarda bunlara göre görünümü değiştireceksin, çıkış yap gözükecek artık
-                session['userneme']=username
+                session['username']=username
                 return redirect(url_for("index"))
             else:
                 flash("Parolanızı yanlış girdiniz..", "danger")
@@ -91,10 +102,16 @@ def register():
     else:
         return render_template("register.html", form = form )   #yukarda oluşturduğumuz formu template e gönderiyoruz sayfa geldiğinde gösterebilmek için
 
+@app.route('/dashboard')
+@login_required                    #route de bir decorator bu da, decorator parametre olarak aşağıdaki fonksiyonu alıyor
+def dashboard():
+    return render_template("dashboard.html")
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
