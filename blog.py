@@ -4,6 +4,8 @@ from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 from passlib.hash import sha256_crypt
 from functools import wraps
 
+
+#login gerektiren fonksiyonların hemen öncesine bu decorator konulmalı
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -81,7 +83,7 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"] )
 def register():
-    form = RegisterForm(request.form)          #eğer post requesti atıldıysa bu request içerisindeki from verileri oluşturduğumuz RegisterForm a gelecek 
+    form = RegisterForm(request.form)          #form u request.form dan gelen form verileri ile oluşturacağız
 
     if request.method=="POST" and form.validate():    #form validate değilse bilgilerde yanlışlık var ise çalışmaz
 
@@ -112,6 +114,27 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+@app.route('/addarticle' , methods=["GET", "POST"])
+def addarticle():
+    form=articleform(request.form)          #request.form dan gelen form ile oluşturuyoruz
+    if request.method == "POST" and form.validate():
+        title=form.title.data
+        content=form.content.data
+        
+        cursor=mysql.connection.cursor()
+        sorgu="INSERT INTO articles(title,author,content) VALUES(%s,%s,%s)"
+        cursor.execute(sorgu, (title, session['username'], content))
+        mysql.connection.commit()
+        cursor.close()
+        flash("Makale başarı ile yüklendi.","success")
+        return redirect(url_for("dashboard"))
+    return render_template("addarticle.html", form=form)      #GET isteği duurmunda sadece formu göstericez
+    return render_template("addarticle.html", form=form)
+
+#makale formu
+class articleform(Form):
+    title=StringField("Makale Başlığı", validators=[validators.length(min=5)])
+    content=TextAreaField("Makale İçeriği", validators=[validators.length(min=10)] )
 
 if __name__ == "__main__":
     app.run(debug=True)
