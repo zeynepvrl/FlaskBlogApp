@@ -107,7 +107,15 @@ def register():
 @app.route('/dashboard')
 @login_required                    #route de bir decorator bu da, decorator parametre olarak aşağıdaki fonksiyonu alıyor
 def dashboard():
-    return render_template("dashboard.html")
+    cursor=mysql.connection.cursor()
+    query="SELECT * FROM articles WHERE author=%s"
+    result=cursor.execute(query,(session['username'],))         #tuple ama tek elemanlı bir tuple olduğunu , ile belirtmeyi unutma
+
+    if result>0:
+        articles=cursor.fetchall()
+        return render_template('dashboard.html', articles=articles)
+    else:
+        return render_template("dashboard.html")
 
 @app.route("/logout")
 def logout():
@@ -129,12 +137,35 @@ def addarticle():
         flash("Makale başarı ile yüklendi.","success")
         return redirect(url_for("dashboard"))
     return render_template("addarticle.html", form=form)      #GET isteği duurmunda sadece formu göstericez
-    return render_template("addarticle.html", form=form)
+
 
 #makale formu
 class articleform(Form):
     title=StringField("Makale Başlığı", validators=[validators.length(min=5)])
     content=TextAreaField("Makale İçeriği", validators=[validators.length(min=10)] )
+
+@app.route('/articles')
+def articles():
+    cursor=mysql.connection.cursor()
+    query="SELECT * from articles"
+    cursor.execute(query)
+    articles=cursor.fetchall()
+    return render_template('articles.html', articles=articles)
+
+
+#article detay sayfası, başlığa tıklayınca
+@app.route('/article/<string:id>')
+def article(id):
+    cursor=mysql.connection.cursor()
+    query="SELECT * FROM articles WHERE id = %s"
+    result=cursor.execute(query, (id,))
+    if result>0:
+        article=cursor.fetchone()
+        return render_template("article.html", article=article)
+    else:
+        render_template("article.html")
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
