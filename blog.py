@@ -165,7 +165,22 @@ def article(id):
     else:
         render_template("article.html")
 
-
+#makale silme
+@app.route('/delete/<string:id>')
+@login_required
+def delete(id):
+    cursor=mysql.connection.cursor()
+    query="Select * from articles where author=%s and id=%s"              #giriş yapmış userın adoyla o makale id sinde bir makale varmmı?
+    result=cursor.execute(query, (session['username'], id))
+    if result>0:
+        article=cursor.fetchone()
+        query="Delete from articles where id =%s"
+        cursor.execute(query, (id,))
+        mysql.connection.commit()                         #veritabanında bir değişiklik yaptın komitlemek gerekir
+        return redirect(url_for('dashboard'))
+    else:
+        flash("Buna yetkiniz yok","danger")
+        return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)
