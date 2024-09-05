@@ -4,6 +4,13 @@
     <h3>Makaleler</h3>
     <hr>
     {% if articles %}
+        <form action="/search" method="POST">
+                <input type="text" name="keyword" class="input-sm" placeholder="ARA">
+                 <button type="submit" class="btn btn-primary btn-sm">ARA</button>
+                 <br>
+                 <br>
+        </form>
+
         <ul class="list-group">
             {% for article in articles %}
                 <li class="list-group-item"><a href="/article/{{article.id}}">{{article.title}}</a></li>

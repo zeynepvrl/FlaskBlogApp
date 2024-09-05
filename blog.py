@@ -209,7 +209,22 @@ def update(id):
         flash("Makale Başarı ile güncellendi..")
         return redirect(url_for("dashboard"))
 
-
+#Arama 
+@app.route("/search", methods=["POST","GET"])        #bu sayfaya hem get request hem post request gelebilir ancak benim sadece post requeste e izin vermem gerekir, url den /search yazıldığında get gelir ama bu yapılırsa ana sayfaya gitsin
+def search():
+    if request.method=="GET":
+        return redirect(url_for("index"))
+    else:
+        keyword=request.form.get("keyword")
+        cursor=mysql.connect.cursor()
+        query="Select * from articles where title like '%"+keyword+"%' "
+        result=cursor.execute(query)
+        if result ==0:
+            flash("Aranan kelimeye uygun bir makale bulunamadı")
+            return redirect(url_for("articles"))
+        else:
+            articles=cursor.fetchall()
+            return render_template("articles.html", articles=articles)
         
 if __name__ == "__main__":
     app.run(debug=True)
