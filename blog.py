@@ -182,5 +182,34 @@ def delete(id):
         flash("Buna yetkiniz yok","danger")
         return redirect(url_for("index"))
 
+#makale güncelleme
+@app.route('/update/<string:id>' , methods=["GET","POST"] )
+def update(id):
+    if request.method =="GET":
+        query="SELECT * from articles where id=%s and author=%s"
+        cursor=mysql.connection.cursor()
+        result = cursor.execute(query,(id, session['username']))
+        if result<=0:
+            flash("Böyle bir yetkiniz bulunmamaktadır.")
+            return redirect(url_for("index"))
+        else:
+            article=cursor.fetchone()
+            form=articleform()
+            form.title.data=article["title"]
+            form.content.data=article["content"]
+            return render_template('update.html', form=form)
+    else:
+        form=articleform(request.form)
+        newtitle=form.title.data
+        newcontent=form.content.data
+        query="Update articles set title=%s , content=%s where id=%s "
+        cursor=mysql.connection.cursor()
+        cursor.execute(query,(newtitle,newcontent,id))
+        mysql.connection.commit()
+        flash("Makale Başarı ile güncellendi..")
+        return redirect(url_for("dashboard"))
+
+
+        
 if __name__ == "__main__":
     app.run(debug=True)
